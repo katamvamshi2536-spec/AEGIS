@@ -12,11 +12,9 @@
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://python.org)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.7+-3178C6.svg)](https://www.typescriptlang.org)
 
-Built specifically for the **Amazon Developer Hackathon**:
+Built specifically for the 
 - **Primary Track**: **Ring**
-- **Mini Challenge**: **AWS Builder** (Amazon Bedrock, AgentCore / Strands Agents, Lambda, DynamoDB, S3, CloudWatch)
-- **Secondary Mini Challenge**: **Open Source** ([PolicyMesh](policymesh/))
-
+-
 ---
 
 ## 1. Problem
