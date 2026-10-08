@@ -644,6 +644,18 @@ export const api = {
       if (res.ok) return await res.json()
     } catch {}
     fallbackDemoStep = stepNumber
+    if (stepNumber >= 8) {
+      const vault = FALLBACK_ZONES.find((z) => z.id === 'server_room')
+      if (vault) vault.current_risk = 91
+      const cam4 = FALLBACK_DEVICES.find((d) => d.id === 'ring-cam-04')
+      if (cam4) {
+        cam4.siren_active = true
+        cam4.floodlight_active = true
+      }
+    } else if (stepNumber >= 6) {
+      const corr = FALLBACK_ZONES.find((z) => z.id === 'server_room_corridor')
+      if (corr) corr.current_risk = 62
+    }
     return { step: stepNumber, status: "completed", mode: "SIMULATION MODE" }
   },
 

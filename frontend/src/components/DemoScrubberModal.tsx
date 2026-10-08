@@ -19,6 +19,7 @@ interface DemoScrubberModalProps {
   demoStatus: DemoStatus | null
   onRunStep: (step: number) => void
   onReset: () => void
+  onLaunch3MinStageDemo?: () => void
 }
 
 const STEP_LABELS = [
@@ -41,6 +42,7 @@ export const DemoScrubberModal: React.FC<DemoScrubberModalProps> = ({
   demoStatus,
   onRunStep,
   onReset,
+  onLaunch3MinStageDemo,
 }) => {
   if (!isOpen) return null
 
@@ -70,6 +72,19 @@ export const DemoScrubberModal: React.FC<DemoScrubberModalProps> = ({
           </div>
 
           <div className="flex items-center space-x-2">
+            {onLaunch3MinStageDemo && (
+              <button
+                onClick={() => {
+                  onClose()
+                  onLaunch3MinStageDemo()
+                }}
+                className="px-3 py-1.5 rounded-lg bg-gradient-to-r from-amber-500/20 to-orange-500/20 hover:from-amber-500/30 hover:to-orange-500/30 border border-amber-500/40 text-amber-300 text-xs font-mono font-bold flex items-center space-x-1.5 transition-all"
+                title="Launch full 3-minute video recording prompter & auto-sequencer"
+              >
+                <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                <span>⚡ 3-MIN STAGE DEMO</span>
+              </button>
+            )}
             <button
               onClick={onReset}
               className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-750 text-slate-300 text-xs font-mono flex items-center space-x-1.5 transition-colors"

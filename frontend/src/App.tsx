@@ -13,6 +13,7 @@ import { PoliciesView } from './components/PoliciesView'
 import { AuditTrailView } from './components/AuditTrailView'
 import { AiCopilotDrawer } from './components/AiCopilotDrawer'
 import { DemoScrubberModal } from './components/DemoScrubberModal'
+import { DemoPlayerHUD } from './components/DemoPlayerHUD'
 import { api } from './api'
 import {
   SystemStatus,
@@ -43,6 +44,7 @@ export const App: React.FC = () => {
   const [selectedIncidentId, setSelectedIncidentId] = useState<string>('AE-1042')
   const [isCopilotOpen, setIsCopilotOpen] = useState(false)
   const [isDemoScrubberOpen, setIsDemoScrubberOpen] = useState(false)
+  const [is3MinDemoActive, setIs3MinDemoActive] = useState(false)
 
   // Fetch initial telemetry
   const loadData = async () => {
@@ -170,10 +172,12 @@ export const App: React.FC = () => {
         status={status}
         demoStatus={demoStatus}
         onOpenDemoScrubber={() => setIsDemoScrubberOpen(true)}
+        onOpen3MinDemo={() => setIs3MinDemoActive(true)}
         onToggleCopilot={() => setIsCopilotOpen((prev) => !prev)}
         onResetDemo={handleResetDemo}
         onRunNextStep={handleRunNextStep}
         isCopilotOpen={isCopilotOpen}
+        is3MinDemoActive={is3MinDemoActive}
       />
 
       <div className="flex-1 flex overflow-hidden">
@@ -263,6 +267,18 @@ export const App: React.FC = () => {
         onClose={() => setIsDemoScrubberOpen(false)}
         demoStatus={demoStatus}
         onRunStep={handleRunDemoStep}
+        onReset={handleResetDemo}
+        onLaunch3MinStageDemo={() => setIs3MinDemoActive(true)}
+      />
+
+      {/* 3-Minute Hackathon Live Stage Demo Teleprompter HUD */}
+      <DemoPlayerHUD
+        isActive={is3MinDemoActive}
+        onClose={() => setIs3MinDemoActive(false)}
+        onNavigateTab={setCurrentTab}
+        onToggleCopilot={setIsCopilotOpen}
+        onSelectIncident={setSelectedIncidentId}
+        onExecuteStep={handleRunDemoStep}
         onReset={handleResetDemo}
       />
     </div>

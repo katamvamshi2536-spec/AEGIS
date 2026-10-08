@@ -16,20 +16,24 @@ interface HeaderProps {
   status: SystemStatus | null
   demoStatus: DemoStatus | null
   onOpenDemoScrubber: () => void
+  onOpen3MinDemo: () => void
   onToggleCopilot: () => void
   onResetDemo: () => void
   onRunNextStep: () => void
   isCopilotOpen: boolean
+  is3MinDemoActive: boolean
 }
 
 export const Header: React.FC<HeaderProps> = ({
   status,
   demoStatus,
   onOpenDemoScrubber,
+  onOpen3MinDemo,
   onToggleCopilot,
   onResetDemo,
   onRunNextStep,
   isCopilotOpen,
+  is3MinDemoActive,
 }) => {
   const currentStep = demoStatus?.current_step || 0
   const isDemoActive = currentStep > 0
@@ -99,6 +103,20 @@ export const Header: React.FC<HeaderProps> = ({
           <Activity className="w-3.5 h-3.5 animate-pulse" />
           <span>THREAT: {avgRisk}/100</span>
         </div>
+
+        {/* 3-Minute Live Stage Demo with Teleprompter HUD */}
+        <button
+          onClick={onOpen3MinDemo}
+          className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg border text-xs font-semibold transition-all ${
+            is3MinDemoActive
+              ? 'bg-amber-400 text-slate-950 border-amber-300 font-bold shadow-glow-blue'
+              : 'bg-gradient-to-r from-amber-500/20 to-orange-500/20 hover:from-amber-500/30 hover:to-orange-500/30 border-amber-500/40 text-amber-300 hover:text-amber-200'
+          }`}
+          title="Launch 3-minute video presentation mode with automated tab switching & teleprompter"
+        >
+          <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping inline-block" />
+          <span>⚡ 3-MIN LIVE DEMO</span>
+        </button>
 
         {/* Single-Click Hackathon Demo Launcher */}
         <div className="flex items-center bg-slate-900/90 border border-slate-800 rounded-lg p-1 shadow-inner">
