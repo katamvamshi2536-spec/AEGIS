@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "policymesh"
+version = "1.0.0"
+description = "Deterministic physical and cyber-physical security policy evaluation engine (RBAC, ABAC, Risk & Time-gated)."
+readme = "README.md"
+authors = [{ name = "AEGIS Team", email = "oss@aegis-security.dev" }]
+license = { text = "MIT" }
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Topic :: Security",
+]
+dependencies = [
+    "pydantic>=2.0.0"
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0"
+]

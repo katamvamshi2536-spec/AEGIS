@@ -1,0 +1,176 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'AEGIS: Agentic Physical Security Intelligence Platform - AWS Infrastructure Stack'
+
+Parameters:
+  Environment:
+    Type: String
+    Default: 'production'
+    AllowedValues: ['development', 'staging', 'production']
+    Description: 'Target deployment environment'
+  RingWebhookSecret:
+    Type: String
+    NoEcho: true
+    Default: 'aegis-ring-live-webhook-secret-token'
+    Description: 'Signature verification key for incoming Ring event streams'
+  BedrockModelId:
+    Type: String
+    Default: 'anthropic.claude-3-5-sonnet-20241022-v2:0'
+    Description: 'Foundation Model for AEGIS AgentCore Orchestrator'
+
+Resources:
+  # ---------------------------------------------------------------------------
+  # Amazon S3: Secure Evidence Vault (Snapshots, Video Clips, Audit Archives)
+  # ---------------------------------------------------------------------------
+  AegisEvidenceBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub 'aegis-security-evidence-${AWS::AccountId}-${Environment}'
+      VersioningConfiguration:
+        Status: Enabled
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      LifecycleConfiguration:
+        Rules:
+          - Id: EvidenceRetentionRule
+            Status: Enabled
+            ExpirationInDays: 365
+            Transitions:
+              - TransitionInDays: 90
+                StorageClass: GLACIER
+
+  # ---------------------------------------------------------------------------
+  # Amazon DynamoDB: Operational Telemetry & State Store
+  # ---------------------------------------------------------------------------
+  AegisSecurityStateTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub 'aegis_security_state_${Environment}'
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: PK
+          AttributeType: S
+        - AttributeName: SK
+          AttributeType: S
+        - AttributeName: GSI1PK
+          AttributeType: S
+        - AttributeName: GSI1SK
+          AttributeType: S
+      KeySchema:
+        - AttributeName: PK
+          KeyType: HASH
+        - AttributeName: SK
+          KeyType: RANGE
+      GlobalSecondaryIndexes:
+        - IndexName: GSI1
+          KeySchema:
+            - AttributeName: GSI1PK
+              KeyType: HASH
+            - AttributeName: GSI1SK
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+      TimeToLiveSpecification:
+        AttributeName: ttl
+        Enabled: true
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: true
+
+  # ---------------------------------------------------------------------------
+  # IAM Role: Least-Privilege Execution for AEGIS Agents
+  # ---------------------------------------------------------------------------
+  AegisAgentExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub 'AegisAgentExecutionRole-${Environment}'
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+                - bedrock.amazonaws.com
+            Action: 'sts:AssumeRole'
+      Policies:
+        - PolicyName: AegisLeastPrivilegePolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - 'bedrock:InvokeModel'
+                  - 'bedrock:InvokeModelWithResponseStream'
+                  - 'bedrock:Converse'
+                  - 'bedrock:ConverseStream'
+                Resource: !Sub 'arn:aws:bedrock:${AWS::Region}::foundation-model/${BedrockModelId}'
+              - Effect: Allow
+                Action:
+                  - 'dynamodb:GetItem'
+                  - 'dynamodb:PutItem'
+                  - 'dynamodb:UpdateItem'
+                  - 'dynamodb:Query'
+                  - 'dynamodb:BatchWriteItem'
+                Resource: !GetAtt AegisSecurityStateTable.Arn
+              - Effect: Allow
+                Action:
+                  - 's3:PutObject'
+                  - 's3:GetObject'
+                Resource: !Sub '${AegisEvidenceBucket.Arn}/*'
+              - Effect: Allow
+                Action:
+                  - 'cloudwatch:PutMetricData'
+                  - 'logs:CreateLogGroup'
+                  - 'logs:CreateLogStream'
+                  - 'logs:PutLogEvents'
+                Resource: '*'
+
+  # ---------------------------------------------------------------------------
+  # AWS Lambda: Ring Webhook Ingestion & Agent Dispatch
+  # ---------------------------------------------------------------------------
+  RingIngestionLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub 'aegis-ring-event-ingestion-${Environment}'
+      Runtime: python3.11
+      Handler: lambda_ring_handler.lambda_handler
+      Role: !GetAtt AegisAgentExecutionRole.Arn
+      Timeout: 30
+      MemorySize: 512
+      Environment:
+        Variables:
+          ENVIRONMENT: !Ref Environment
+          DYNAMODB_TABLE: !Ref AegisSecurityStateTable
+          EVIDENCE_BUCKET: !Ref AegisEvidenceBucket
+          RING_SECRET: !Ref RingWebhookSecret
+          BEDROCK_MODEL_ID: !Ref BedrockModelId
+
+  # ---------------------------------------------------------------------------
+  # Amazon CloudWatch: Alarm on Critical Threat Escalation
+  # ---------------------------------------------------------------------------
+  AegisCriticalThreatAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Sub 'AEGIS-Critical-Security-Threat-${Environment}'
+      AlarmDescription: 'Fires when an active Ring stream is escalated to Critical Risk (>80)'
+      Namespace: 'AEGIS/SecurityIntelligence'
+      MetricName: 'CriticalThreatCount'
+      Statistic: 'Sum'
+      Period: 60
+      EvaluationPeriods: 1
+      Threshold: 1
+      ComparisonOperator: 'GreaterThanOrEqualToThreshold'
+
+Outputs:
+  EvidenceBucketArn:
+    Value: !GetAtt AegisEvidenceBucket.Arn
+  DynamoDBTableName:
+    Value: !Ref AegisSecurityStateTable
+  LambdaFunctionArn:
+    Value: !GetAtt RingIngestionLambda.Arn
