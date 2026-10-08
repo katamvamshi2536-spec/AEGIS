@@ -3,6 +3,8 @@
 
 > **"From camera events to intelligent security decisions."**
 
+[![Live Demo](https://img.shields.io/badge/Demo-Live%20on%20GitHub%20Pages-brightgreen?style=for-the-badge&logo=github)](https://katamvamshi2536-spec.github.io/AEGIS/)
+
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Ring Track](https://img.shields.io/badge/Track-Ring%20Primary-0284c7.svg)](#ring-integration)
 [![AWS Builder](https://img.shields.io/badge/Challenge-AWS%20Builder-FF9900.svg)](#aws-architecture)
